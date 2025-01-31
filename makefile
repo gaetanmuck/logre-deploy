@@ -64,7 +64,7 @@ install-verbose:
 start: update install
 	@echo "[makefile] Selecting environment $(PIPENV_NAME)..."
 	@source $(PIPENV_NAME)/bin/activate && \
-	cd src; $(PYTHON) -m streamlit run server.py
+	$(PYTHON) -m streamlit run src/server.py
 
 
 start-verbose: update-verbose install-verbose

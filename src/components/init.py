@@ -13,7 +13,7 @@ def init(layout='centered') -> None:
 
     # Load version number
     if 'VERSION' not in st.session_state:
-        file = open('../VERSION', 'r')
+        file = open('./VERSION', 'r')
         version = file.read()
         file.close()
         st.session_state['VERSION'] = version
