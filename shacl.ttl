@@ -43,9 +43,7 @@ sdh-shacl:crm_E21_Shape a sh:NodeShape ;
         sh:maxCount 1 ;
         sh:path [ 
             sh:inversePath crm:P98;
-            ### None of both is not valid in SHACL
-            # sh:class — sh:targetClass crm:E67;
-            ] ;
+        ] ;
         ];
             
     sh:property [

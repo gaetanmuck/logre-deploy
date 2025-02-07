@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.8.0 - Date 2025-02-07
+
+Pretty big update:
+- Entity creation formular (with SHACL)
+- Entity card (with SHACL)
+- Entity triples
+- Entity update (on SHACL card)
+
+Also changed how graph are selected (radio instead of checkbox to avoid multiple graph selection)
+
+## v1.7.5 - Date 2025-02-04
+
+Solve the issue where when creating a graph, its label and comment were previously written in the newly graph.
+Now those triples are inserted in the default Graph.
+Also, when creating a graph, it needs to have at least one triple in it. So, on graph creation via Logre, it create a dummy triple.
+Also handle those things on deletion.
+
+## v1.7.4 - Date 2025-02-04
+
+Refactor SPARQL Queries
+Correction on how default graph is handled
+When run locally, configuration is saved on disk on modification
+When run locally, download button disapears
+Put base:shacl as a default model graph
+
+## v1.7.3 - Date 2025-02-04
+
+Change list_graph query
+
+## v1.7.2 - Date 2025-02-03
+
+Allows to directly load a configuration if it has one present on disk ("logre-config.toml")
+
 ## v1.7.1 - Date 2025-01-31
 
 Bug corrections

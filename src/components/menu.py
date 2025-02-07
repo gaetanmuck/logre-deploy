@@ -1,6 +1,19 @@
 import streamlit as st
 from lib.sparql_queries import list_graphs
-from lib.utils import parse_toml
+from lib.utils import load_config
+
+
+def on_graph_selection():
+    """Callback function for the graph selection."""
+
+    # Compute all graph labels, and fetch radio button value
+    graphs_labels = [graph['label'] for graph in st.session_state["all_graphs"]]
+    graph_label = st.session_state['radio-btn-graph-selection']
+
+    # Find the selected graph, and set the session variable
+    index = graphs_labels.index(graph_label)
+    st.session_state['activated_graph_index'] = index
+
 
 
 def menu() -> None:
@@ -24,12 +37,7 @@ def menu() -> None:
         config_file = st.sidebar.file_uploader('Set a configuration:', 'toml', accept_multiple_files=False)
 
         if config_file:
-            config = parse_toml(config_file.getvalue().decode("utf-8"))
-            st.session_state['configuration'] = True
-            if 'all_endpoints' in config:
-                st.session_state['all_endpoints'] = config['all_endpoints']
-            if 'all_queries' in config:
-                st.session_state['all_queries'] = config['all_queries']
+            load_config(config_file.getvalue().decode("utf-8"))
             st.rerun()
 
     else:
@@ -66,6 +74,7 @@ def menu() -> None:
                 st.cache_data.clear()
                 st.cache_resource.clear()
                 st.rerun()
+                
 
             # Fetch all graphs from the endpoint, and add the default one (at first position)
             if "all_graphs" not in st.session_state:
@@ -74,8 +83,7 @@ def menu() -> None:
                 st.session_state["all_graphs"] = [{
                     'uri': None,
                     'label': 'Default',
-                    'comment': "Comment not set",
-                    'activated': True
+                    'comment': "No comment"
                 }]
 
                 # Fetch and add other graphs
@@ -83,20 +91,22 @@ def menu() -> None:
                 for i, graph in enumerate(graphs):
                     st.session_state["all_graphs"].append({
                         'uri': graph['uri'],
-                        'label': graph['label'] if 'label' in graph else "Unknown label",
-                        'comment': graph['comment'] if 'comment' in graph else "Comment not set",
-                        'activated': False
+                        'label': graph['label'],
+                        'comment': graph['comment']
                     })
+                
+                st.session_state['activated_graph_index'] = 0
 
-            # Allow user to activate/deactivate a graph
-            st.sidebar.markdown('#### Endpoint graph List:')
-            for i, graph in enumerate(st.session_state["all_graphs"]):
-                # Make the session match the GUI
-                if st.sidebar.checkbox(graph['label'], value=graph['activated'], key=f'graph-checkbox-{i}'):
-                    if st.session_state['all_graphs'][i]['activated'] != True:
-                        st.session_state['all_graphs'][i]['activated'] = True
-                        st.rerun()
-                else:
-                    if st.session_state['all_graphs'][i]['activated'] != False:
-                        st.session_state['all_graphs'][i]['activated'] = False
-                        st.rerun()
+            st.sidebar.text('')
+
+            # Allow user to choose the graph to activate
+            graphs_labels = [graph['label'] for graph in st.session_state["all_graphs"]]
+
+            # Manage the graph selection
+            st.sidebar.radio('Selected graph', options=graphs_labels, index=st.session_state['activated_graph_index'], key='radio-btn-graph-selection', on_change=on_graph_selection)
+
+            # activated_label = st.sidebar.radio('Selected graph', options=graphs_labels, index=st.session_state['activated_graph_index'], key='graph-radio', on_change=on_graph_selection)
+            # if activated_label:
+            #     index = graphs_labels.index(activated_label)
+            #     if index != st.session_state['activated_graph_index']:
+            #         st.session_state['activated_graph_index'] = index

@@ -3,8 +3,9 @@ import unicodedata
 import uuid
 import time
 import toml
+import streamlit as st
 
-def ensure_uri(supposed_uri: str) -> str:
+def ensure_uri(supposed_uri: str) -> str | None:
     """
     Make sure that the given URI has the correct format.
     Knows a list of prefixes.
@@ -16,7 +17,7 @@ def ensure_uri(supposed_uri: str) -> str:
         return None
 
     # First check if the given URI has a prefix
-    prefixes = ["xsd", "rdf", "rdfs", "owl", "sh", "crm", "sdh", "sdh-shortcut", "sdh-shacl", "ontome", "geov", "base"]
+    prefixes = ["xsd", "rdf", "rdfs", "owl", "sh", "crm", "sdh", "sdh-shortcut", "sdh-shacl", "ontome", "geov", "base", "_"]
     for prefix in prefixes:
         if supposed_uri.startswith(prefix + ":"):
             return supposed_uri
@@ -70,13 +71,30 @@ def to_snake_case(text: str) -> str:
     return snake_case_text
 
 
-def generate_uuid() -> str:
+def generate_id() -> str:
     "Generate a uuid base on the current time"
-    return str(uuid.uuid5(uuid.NAMESPACE_DNS, str(time.time())))
+
+    timestamp_ms = int(time.time() * 1000)
+    BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+    if timestamp_ms == 0: 
+        return BASE64_ALPHABET[0]
+    
+    result = ""
+    while timestamp_ms:
+        timestamp_ms, remainder = divmod(timestamp_ms, 62)
+        result = BASE64_ALPHABET[remainder] + result
+
+    return result
 
 
-def parse_toml(file_content) -> dict:
-    return toml.loads(file_content)
+def load_config(file_content) -> None:
+    """From a file content, parse it as configuration and set it in session"""
 
-def stringify_toml(obj) -> str:
-    return toml.dumps(obj)
+    config = toml.loads(file_content)
+
+    st.session_state['configuration'] = True
+    if 'all_endpoints' in config:
+        st.session_state['all_endpoints'] = config['all_endpoints']
+    if 'all_queries' in config:
+        st.session_state['all_queries'] = config['all_queries']
