@@ -1,18 +1,18 @@
+from typing import Literal
 import streamlit as st
-import time, toml, os
+from schema import Triple, EndpointTechnology, OntologyFramework, Endpoint, Graph
+from lib.sparql_base import delete
+from lib.sparql_queries import count_graph_triples
+from lib.utils import readable_number, ensure_uri
+from lib.configuration import save_config, get_config_toml, CONFIG_PATH
+import lib.state as state
 from components.init import init
 from components.menu import menu
 from components.dialog_confirmation import dialog_confirmation
-from lib.sparql_base import insert, delete
-from lib.sparql_queries import count_graph_triples
-from lib.utils import readable_number, to_snake_case, ensure_uri
-from schema import Triple
-import lib.state as state
-from schema import EndpointTechnology, OntologyFramework, Endpoint
-from lib.configuration import save_config
+from components.dialog_download_graph import dialog_download_graph
 from components.dialog_config_endpoint import dialog_config_endpoint
 from components.dialog_config_graph import dialog_config_graph
-from lib.configuration import get_config_toml, CONFIG_PATH
+
 
 # Contants
 technologies = [e.value for e in EndpointTechnology]
@@ -34,22 +34,32 @@ def __delete_endpoint(endpoint: Endpoint) -> None:
     st.rerun()
 
 
-def __prune_graph(graph: str) -> None:
+def __prune_graph(graph: Graph) -> None:
     """Delete all statements of a given graph"""
 
-    graph_uri = ensure_uri(graph)
+    graph_uri = ensure_uri(graph.uri)
 
     # The delete "where clause" triple: delete all triples from the graph
     triple = Triple('?s', '?p', '?o')
     delete(triple, graph=graph_uri)
 
-    # Also, from the default graph, delete all predicates related to the graph (label, comment, ...)
-    triple = Triple(graph_uri, '?p', '?o')
-    delete(triple)
+    # If the graph is not the default one
+    if graph.uri:
+        # Also, from the default graph, delete all predicates related to the graph (label, comment, ...)
+        triple = Triple(graph_uri, '?p', '?o')
+        delete(triple)
 
     state.clear_graphs()
     state.set_toast('Graph deleted', icon=':material/delete:')
     st.rerun()
+
+
+def __download_graph(graph: Graph, export_format: Literal['ttl', 'csv']):
+    import base64
+    data = "Hello, this is a sample file."
+    b64 = base64.b64encode(data.encode()).decode()
+    href = f'<a href="data:file/txt;base64,{b64}" download="sample.txt">Download automatically</a>'
+    st.markdown(href, unsafe_allow_html=True)
 
 
 def __show_endpoint_list() -> None:
@@ -134,15 +144,18 @@ def __graph_list() -> None:
     # Display all graphs in sessions
     for i, graph in enumerate(all_graphs):
         st.text('')
-        col1, col2, col3, col4 = st.columns([3, 2, 5, 4], vertical_alignment='center')
+        col1, col2, col3, col4, col5 = st.columns([3, 2, 4, 1, 1], vertical_alignment='center')
         col1.markdown(graph.label)
         col2.markdown(f"{readable_number(count_graph_triples(graph.uri))} triples")
         col3.markdown(graph.comment)
 
         # Button to cleanse a graph
-        if col4.button('Prune graph', key=f"config-graph-{i}", icon=":material/delete_sweep:", help='From the endpoint, this will remove all triples of this graph, but also information about the graph in others. Resulting in making the graph fully disapear.'):
-            dialog_confirmation(f'You are about to delete the graph "{graph.label}" and all its triples.', __prune_graph, graph=graph.uri)
+        if col4.button('', key=f"config-graph-delete-{i}", icon=":material/delete:", help='From the endpoint, this will remove all triples of this graph, but also information about the graph in others. Resulting in making the graph fully disapear.', type='tertiary'):
+            dialog_confirmation(f'You are about to delete the graph "{graph.label}" and all its triples.', __prune_graph, graph=graph)
 
+        # Button to download a graph
+        if col5.button('', key=f"config-graph-download-csv-{i}", icon=":material/download:", type='tertiary'):
+            dialog_download_graph(graph)
 
 ##### The page #####
 
@@ -171,13 +184,13 @@ st.divider()
 
 ### ENDPOINTS ###
 
-col1, col2, col3, col4 = st.columns([2, 2, 2, 2], vertical_alignment='bottom')
+col1, col2, col3, col4 = st.columns([4, 1, 1, 2], vertical_alignment='bottom')
 col1.markdown('### Endpoints')
 
 st.text("")
 
-col2.button('Show list', on_click=__show_endpoint_list, icon=':material/visibility:', key='config-btn-show-endpoints')
-col3.button('Hide list', on_click=__hide_endpoint_list, icon=':material/visibility_off:', key='config-btn-hide-endpoints')
+col2.button('Show', on_click=__show_endpoint_list, icon=':material/visibility:', key='config-btn-show-endpoints', type='tertiary')
+col3.button('Hide', on_click=__hide_endpoint_list, icon=':material/visibility_off:', key='config-btn-hide-endpoints', type='tertiary')
 col4.button('Add new', on_click=dialog_config_endpoint, icon=':material/add:', key='config-btn-add-endpoint')
 
 __endpoint_list()
@@ -192,11 +205,11 @@ st.divider()
 if endpoint:
 
     # Title and boxes for graph actions (show/hide graph list)
-    col1, col2, col3, col4 = st.columns([2, 2, 2, 2], vertical_alignment='bottom')
+    col1, col2, col3, col4 = st.columns([4, 1, 1, 2], vertical_alignment='bottom')
     col1.markdown('### Graphs')
 
-    col2.button('Show list', on_click=__show_graph_list, icon=':material/visibility:', key='config-btn-show-graphs')
-    col3.button('Hide list', on_click=__hide_graph_list, icon=':material/visibility_off:', key='config-btn-hide-graphs')
+    col2.button('Show', on_click=__show_graph_list, icon=':material/visibility:', key='config-btn-show-graphs', type='tertiary')
+    col3.button('Hide', on_click=__hide_graph_list, icon=':material/visibility_off:', key='config-btn-hide-graphs', type='tertiary')
     col4.button('Add new', on_click=dialog_config_graph, icon=':material/add:', key='config-btn-add-graph')
 
     __graph_list()
