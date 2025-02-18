@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## v1.8.2 - Date
+## v1.9.0 - Date 2025-02-18
+
+- Allow user to import spreadsheets (CSV)
+- Bug corrections
+
+## v1.8.3 - Date 2025-02-17
+
+- Solve download graph issues
+- Clean some display bugs
+- Solve Ontoloy imports problems
+
+## v1.8.2 - Date 2025-02-15
 
 - Allow possibility to download a graph as TTL
 - Allow possibility to download all entities listed in the ontology as a CSV, all bundled into a zip file

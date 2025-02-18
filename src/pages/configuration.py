@@ -9,14 +9,9 @@ import lib.state as state
 from components.init import init
 from components.menu import menu
 from components.dialog_confirmation import dialog_confirmation
-from components.dialog_download_graph import dialog_download_graph
+from components.dialog_download import dialog_download_graph, dialog_dump_endpoint
 from components.dialog_config_endpoint import dialog_config_endpoint
 from components.dialog_config_graph import dialog_config_graph
-
-
-# Contants
-technologies = [e.value for e in EndpointTechnology]
-frameworks = [e.value for e in OntologyFramework]
 
 
 def __delete_endpoint(endpoint: Endpoint) -> None:
@@ -54,14 +49,6 @@ def __prune_graph(graph: Graph) -> None:
     st.rerun()
 
 
-def __download_graph(graph: Graph, export_format: Literal['ttl', 'csv']):
-    import base64
-    data = "Hello, this is a sample file."
-    b64 = base64.b64encode(data.encode()).decode()
-    href = f'<a href="data:file/txt;base64,{b64}" download="sample.txt">Download automatically</a>'
-    st.markdown(href, unsafe_allow_html=True)
-
-
 def __show_endpoint_list() -> None:
     # Here, because it is only for here and for display information
     # We took the liberty of handling the session_state directly
@@ -95,11 +82,11 @@ def __endpoint_list() -> None:
         col1, col2, col3 = st.columns([6, 6, 7], vertical_alignment='center')
         col1.text_input('Username', value=endpoint.username, key=f"config-endpoint-username-{i}", disabled=True)
         col2.text_input('Password', value=endpoint.password, key=f"config-endpoint-password-{i}", type='password', disabled=True)
-        col3.selectbox('Endpoint technology', technologies, index=technologies.index(endpoint.technology), key=f"config-endpoint-technology-{i}", disabled=True)
+        col3.text_input('Endpoint technology', value=endpoint.technology.value, key=f"config-endpoint-technology-{i}", disabled=True)
         col1, col2, col3 = st.columns([8, 5, 5], vertical_alignment='center')
         col1.text_input('Base URI', value=endpoint.base_uri, key=f"config-endpoint-base-uri-{i}", disabled=True)
         col2.text_input('Ontology graph URI', value=endpoint.ontology_uri, key=f"config-endpoint-ontology-graph-uri-{i}", disabled=True)
-        col3.text_input('Ontology Framework', value=endpoint.ontology_framework, key=f"config-endpoint-ontology-framework-{i}", disabled=True)
+        col3.text_input('Ontology Framework', value=endpoint.ontology_framework.value, key=f"config-endpoint-ontology-framework-{i}", disabled=True)
 
         st.text('')
         
@@ -205,9 +192,10 @@ st.divider()
 if endpoint:
 
     # Title and boxes for graph actions (show/hide graph list)
-    col1, col2, col3, col4 = st.columns([4, 1, 1, 2], vertical_alignment='bottom')
+    col1, col_dump, col2, col3, col4 = st.columns([2, 2, 1, 1, 2], vertical_alignment='bottom')
     col1.markdown('### Graphs')
 
+    col_dump.button('Dump', icon=":material/download_2:", on_click=dialog_dump_endpoint, type='tertiary')
     col2.button('Show', on_click=__show_graph_list, icon=':material/visibility:', key='config-btn-show-graphs', type='tertiary')
     col3.button('Hide', on_click=__hide_graph_list, icon=':material/visibility_off:', key='config-btn-hide-graphs', type='tertiary')
     col4.button('Add new', on_click=dialog_config_graph, icon=':material/add:', key='config-btn-add-graph')
