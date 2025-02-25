@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.10.0 - Date
+
+- Allow to import multiples .ttl and .csv files at once
+- Add visualization for entities
+- When generating ids, prepend a 'i' for a resource, and a 'g' for a graph
+- Add spinners eveywhere needed
+- Enhance caching behavior
+- Handle blank nodes more properly
+
+## v1.9.1 - Date 2025-02-19
+
+- Allow to add multiple time the same triple in formulars when ontology allows it
+- Add a delete button on the entity card
+- Solve bugs
+- Change the way dump is handled: Now when dumping, create a n-quads file.
+
 ## v1.9.0 - Date 2025-02-18
 
 - Allow user to import spreadsheets (CSV)

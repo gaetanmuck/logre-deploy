@@ -10,7 +10,7 @@ class OntologyProperty(BaseModel):
 
     domain_class_uri: str 
     range_class_uri: str
-
+    card_of_class_uri: str
 
     @field_validator("order", mode="before")
     @classmethod
@@ -41,4 +41,5 @@ class OntologyProperty(BaseModel):
         return cls(**data)
     
     def get_key(self) -> str:
-        return f"{self.domain_class_uri}-{self.uri}"
+        """Create a key to identify a property and its vision for a class (eg "was born" on the Person class, but "brought into life" for a Birth card)"""
+        return f"{self.domain_class_uri or self.range_class_uri}-{self.uri}"
