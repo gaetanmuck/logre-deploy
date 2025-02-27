@@ -1,4 +1,5 @@
 from typing import Literal
+from enum import Enum
 from schema import Prefix, EndpointTechnology
 import lib.state as state
 
@@ -15,14 +16,23 @@ prefixes = [
     Prefix(short='ontome', url='https://ontome.net/ontology/'),
 ]
 
+def get_all_prefixes() -> list[Prefix]:
+    """
+    Return a list of prefixes based on the default one, 
+    the endpoint base one, 
+    plus all those added by the user
+    """
+
+    return prefixes + state.get_prefixes() + [Prefix(short='base', url=state.get_endpoint().base_uri)]
+
 
 def get_prefixes_str(format: Literal['sparql', 'turtle'] = 'sparql') -> str:
     """
     Transform the list of prefixes into a valid SPARQL.
     Done to avoid to put manually all prefixes everywhere.
     """
-    # Add the dynamic one (base)
-    all_prefixes = prefixes + [Prefix(short='base', url=state.get_endpoint().base_uri)]
+
+    all_prefixes = get_all_prefixes()
 
     # Transform to list of string
     prefixes_str = list(map(lambda p: p.to_sparql() if format == 'sparql' else p.to_turtle(), all_prefixes))
@@ -31,10 +41,10 @@ def get_prefixes_str(format: Literal['sparql', 'turtle'] = 'sparql') -> str:
 
     # In case we are in Allegrograph, we would like to shortcut the default graph behavior of Allegrograph
     endpoint_technology = state.get_endpoint().technology
-    # For some reason, sometimes, especially on hot reload, streamlit looses the enums.
+    # For some reason, sometimes, especially on hot reload, Enums are lost.
     # Maybe its my fault, by I can't find the reason why after some clicking around, the enums are lost
     # This is the way I found to make it work every time
-    if endpoint_technology == EndpointTechnology.ALLEGROGRAPH or endpoint_technology.value == EndpointTechnology.ALLEGROGRAPH.value:
+    if endpoint_technology == EndpointTechnology.ALLEGROGRAPH or endpoint_technology == EndpointTechnology.ALLEGROGRAPH.value:
         franz_rdf = Prefix(short='franzOption_defaultDatasetBehavior', url='franz:rdf')
         if format == 'sparql': prefixes_str = [franz_rdf.to_sparql()] + prefixes_str
 
@@ -48,12 +58,12 @@ def shorten_uri(uri: str) -> str:
     Usefull to display in the GUI.
     """
 
-    # Add the dynamic one (base)
-    all_prefixes = prefixes + [Prefix(short='base', url=state.get_endpoint().base_uri)]
-    
+    all_prefixes = get_all_prefixes()
+
     for prefix in all_prefixes:
         uri = prefix.shorten(uri)
     return uri
+
 
 def explicits_uri(uri: str) -> str:
     """
@@ -61,15 +71,17 @@ def explicits_uri(uri: str) -> str:
     Usefull to display in the GUI.
     """
 
-    # Add the dynamic one (base)
-    all_prefixes = prefixes + [Prefix(short='base', url=state.get_endpoint().base_uri)]
-    
+    all_prefixes = get_all_prefixes()
+
     for prefix in all_prefixes:
         uri = prefix.explicit(uri)
     return uri
 
+
 def is_prefix(supposed_prefix: str) -> bool:
     """Check if the given supposed prefix is listed as a prefix."""
+    
+    all_prefixes = get_all_prefixes()
 
-    found = [prefix for prefix in prefixes if prefix.short == supposed_prefix]
+    found = [prefix for prefix in all_prefixes if prefix.short == supposed_prefix]
     return len(found) == 0

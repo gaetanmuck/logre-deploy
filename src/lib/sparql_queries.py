@@ -77,10 +77,10 @@ def get_ontology() -> Ontology:
     # From state
     framework = state.get_endpoint().ontology_framework
 
-    # For some reason, sometimes, especially on hot reload, streamlit looses the enums.
+    # For some reason, sometimes, especially on hot reload, Enums are lost.
     # Maybe its my fault, by I can't find the reason why after some clicking around, the enums are lost
     # This is the way I found to make it work every time
-    if framework == OntologyFramework.SHACL or framework.value == OntologyFramework.SHACL.value:
+    if framework == OntologyFramework.SHACL or framework == OntologyFramework.SHACL.value:
         with st.spinner('Fetching SHACL ontology...'):
             ontology = get_shacl_ontology()
     else:
@@ -278,7 +278,7 @@ def get_entity_outgoing_triples(entity: Entity, graph: Graph = None) -> List[Dis
             ('""" + entity.label + """' as ?subject_label)
             ('""" + entity.class_uri + """' as ?subject_class_uri)
             ('""" + (entity.comment or '') + """' as ?subject_comment)
-            (isBlank(""" + entity_uri + """) as ?object_is_blank)
+            (isBlank(""" + entity_uri + """) as ?subject_is_blank)
             ?predicate_uri
             ?object_uri
             (COALESCE(?object_label_, '') as ?object_label)
@@ -493,6 +493,8 @@ def get_graph_of_entities(entity_uris: List[str]) -> List[DisplayTriple]:
     ontology = get_ontology()
     classes_dict = ontology.get_classes_named_dict()
     properties_dict = ontology.get_properties_named_dict()
+
+    entity_uris = list(map(lambda uri: ensure_uri(uri), entity_uris))
 
     # Prepare the query
     text = """            
